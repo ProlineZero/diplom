@@ -130,7 +130,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = ['https://83.222.9.212']
+CSRF_TRUSTED_ORIGINS = ['https://83.222.9.212', 'https://83.222.9.212/api/add/']
+# CSRF_COOKIE_SECURE = False
+# CSRF_COOKIE_HTTPONLY = False
+# SESSION_COOKIE_SECURE = False
+# CORS_ALLOW_CREDENTIALS = True
 
 INTERNAL_IPS = [
     # ...

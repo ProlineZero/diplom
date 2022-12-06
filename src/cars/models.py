@@ -60,9 +60,9 @@ class Car(models.Model):
     transmission_type = models.ForeignKey(TransmissionType, on_delete=models.PROTECT)
     body_type = models.ForeignKey(BodyType, on_delete=models.PROTECT)
     generation = models.ForeignKey(Generation, on_delete=models.PROTECT)
-    production_start_year = models.IntegerField()
     engine_capacity = models.FloatField()
     engine_power = models.IntegerField()
+    production_start_year = models.IntegerField()
     popularity = models.IntegerField(default=0, blank=True)
 
     class Meta:
