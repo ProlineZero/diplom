@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='Car',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('production_start_year', models.IntegerField()),
+                ('year_start', models.IntegerField()),
                 ('engine_capacity', models.FloatField()),
                 ('engine_power', models.IntegerField()),
                 ('popularity', models.IntegerField()),
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='car',
-            constraint=models.CheckConstraint(check=models.Q(('production_start_year__gte', 1850), ('production_start_year__lte', 2022)), name='production_start_year'),
+            constraint=models.CheckConstraint(check=models.Q(('year_start__gte', 1850), ('year_start__lte', 2022)), name='year_start'),
         ),
         migrations.AddConstraint(
             model_name='car',

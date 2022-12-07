@@ -28,7 +28,7 @@ class Model(models.Model):
 
 class Generation(models.Model):
     model = models.ForeignKey(Model, on_delete=models.PROTECT)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name
@@ -56,24 +56,32 @@ class BodyType(models.Model):
 
 
 class Car(models.Model):
+    generation = models.ForeignKey(Generation, on_delete=models.PROTECT)
     engine_type = models.ForeignKey(EngineType, on_delete=models.PROTECT)
     transmission_type = models.ForeignKey(TransmissionType, on_delete=models.PROTECT)
     body_type = models.ForeignKey(BodyType, on_delete=models.PROTECT)
-    generation = models.ForeignKey(Generation, on_delete=models.PROTECT)
     engine_capacity = models.FloatField()
     engine_power = models.IntegerField()
-    production_start_year = models.IntegerField()
+    year_start = models.IntegerField()
+    year_end = models.IntegerField(blank=True, null=True)
     popularity = models.IntegerField(default=0, blank=True)
+    name = models.CharField(max_length=500, default='', blank=True)
+    pict_id = models.IntegerField(default=0)
 
     class Meta:
         constraints = [
-        models.CheckConstraint(check=(Q(production_start_year__gte=1850) & Q(production_start_year__lte=(datetime.date.today().year))), name='production_start_year'),
+        models.CheckConstraint(check=(Q(year_start__gte=1850) & Q(year_start__lte=(datetime.date.today().year))), name='year_start'),
+        models.CheckConstraint(check=(Q(year_end__gte=1850) & Q(year_end__lte=(datetime.date.today().year))), name='year_end'),
         models.CheckConstraint(check=(Q(engine_power__gt=0) & Q(engine_power__lte=5000)), name='engine_power'),
-        models.CheckConstraint(check=(Q(engine_type=EngineType.objects.get(name='Electric').id) | Q(engine_capacity__gte=0) & Q(engine_capacity__lte=30)), name='engine_capacity'),
+        models.CheckConstraint(check=(Q(engine_type=EngineType.objects.get(name='Электрический').id) | Q(engine_capacity__gte=0) & Q(engine_capacity__lte=30)), name='engine_capacity'),
     ]
 
-    def __str__(self):
+    def save(self, *args, **kwargs):
         generation_str = Generation.objects.get(id=self.generation.id)
         model_str = Model.objects.get(id=generation_str.model.id)
         brand_str = Brand.objects.get(id=model_str.brand.id)
-        return brand_str.__str__() + ' ' + model_str.__str__() + ' ' + generation_str.__str__()
+        self.name = brand_str.__str__() + ' ' + model_str.__str__() + ' ' + generation_str.__str__()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return self.name
