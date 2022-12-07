@@ -4,6 +4,9 @@ from django.http import HttpResponse, HttpResponseNotFound, Http404
 from .models import *
 from .functions import get_or_create_simple_object
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .serializers import CarListSerializer, CarDetailSerializer
 import json
 
 @csrf_exempt
@@ -26,6 +29,30 @@ def add_car_to_database(request):
     engine_power=req_dict['engine_power'], pict_id=req_dict['pict_id'])
 
     return HttpResponse('Good')
+
+
+@api_view(['GET'])
+def api_test(request):
+    api_urls = {
+        'aboba': 'yes',
+        'not aboba': 'bo'
+    }
+
+    return Response(api_urls)
+
+
+@api_view(['GET'])
+def car_list(reqest):
+    cars = Car.objects.all()
+    serializer = CarListSerializer(cars, many=True)
+    return Response(serializer.data )
+
+
+@api_view(['GET'])
+def car_detail(reqest, id):
+    cars = Car.objects.get(id=id)
+    serializer = CarDetailSerializer(cars, many=False)
+    return Response(serializer.data )
 
 # {
 #     "country": "Germany",
