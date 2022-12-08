@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, F
 import datetime
 
 # Create your models here.
@@ -85,3 +85,12 @@ class Car(models.Model):
     
     def __str__(self):
         return self.name
+
+    def get_model_id(self):
+        return Generation.objects.get(id=self.generation.id).model.id
+
+    def get_brand_id(self):
+        return Model.objects.get(id=self.get_model_id()).brand.id
+
+    def get_country_id(self):
+        return Brand.objects.get(id=self.get_brand_id()).country.id

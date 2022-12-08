@@ -7,7 +7,3 @@ def get_or_create_simple_object(class_name, **kwargs):
     except:
         res = class_name.objects.create(**kwargs)
     return res
-
-
-# def testt(class_name, **kwargs):
-#     return class_name.objects.get(**kwargs)
