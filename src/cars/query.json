@@ -1,0 +1,22 @@
+{
+    "name": "Mitsubishi Lancer IX",
+    "country": "Япония",
+ 
+    "brand": "Mitsubishi",
+    "model": "Lancer",
+    "generation": "IX",
+
+    "engine_type": "Бензин",
+    "transmission_type": "Механическая",
+    "body_type": "Седан",
+    "drive_type": "Передний",
+
+    "engine_capacity_from": "1.6",
+    "engine_capacity_to": "2.0",
+    "engine_power_from": "98",
+    "engine_power_to": "98",
+    "year_start": "2002",
+    "year_end": "2010",
+
+    "order_by": "engine_power"
+}

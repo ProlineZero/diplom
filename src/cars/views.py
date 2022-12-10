@@ -12,9 +12,8 @@ import json
 @csrf_exempt
 @api_view(['POST'])
 def add_car_to_database(request):
-    try:
-        req_dict = request.data
-        
+    req_dict = request.data
+    try:        
         country = get_or_create_simple_object(Country, name=req_dict['country'])
 
         brand = get_or_create_simple_object(Brand, name=req_dict['brand'], country=country)
@@ -30,64 +29,79 @@ def add_car_to_database(request):
         year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
         engine_power=req_dict['horse_power'], pict_id=req_dict['pict_name'])
     except:
+        Exceptions.objects.create(name=req_dict['id'])
         return HttpResponse('Автомобиль <span style="color: red;">не добавлен</span>! Проверьте правильность введенных данных и повторите попытку.')
 
     return HttpResponse('Автомобиль успешно <span style="color: green">добавлен!</span>')
 
-# class CarManager(models.Manager):
-#     def 
 
 @api_view(['GET'])
 def car_list(request):
-    # try:
-    #     if request.data['country']:
-    #         country_id = Country.objects.get(name=request.data['country']).id
-    #     else:
-    #         country_id = -1
+    cars = Car.objects.all()
+    try:
+        if request.data['country']:
+            country_id = Country.objects.get(name=request.data['country']).id
+        else:
+            country_id = 0
 
-    #     if request.data['brand']:
-    #         if country_id:
-    #             brand_id = Brand.objects.get(country=country_id, name=request.data['brand']).id
-    #         else:
-    #             brand_id = Brand.objects.get(name=request.data['brand']).id
+        if request.data['brand']:
+            if country_id:
+                brand_id = Brand.objects.get(country=country_id, name=request.data['brand']).id
+            else:
+                brand_id = Brand.objects.get(name=request.data['brand']).id
 
-    #         if request.data['model']:
-    #             model_id = Model.objects.get(brand=brand_id, name=request.data['model']).id
-    #         generation_id = Generation.objects.get(model=model_id, name=request.data['generation']).id
-    #     else:
-    #         print()
+            if request.data['model']:
+                model_id = Model.objects.get(brand=brand_id, name=request.data['model']).id
 
-    #     engine_type_id = EngineType.objects.get(name=request.data['engine_type']).id
-    #     transmission_type_id = TransmissionType.objects.get(name=request.data['transmission_type']).id
-    #     body_type_id = BodyType.objects.get(name=request.data['body_type']).id
+                if request.data['generation']:
+                    generation_id = Generation.objects.get(model=model_id, name=request.data['generation'])
+                    cars = cars.filter(generation=generation_id)
+                else: 
+                    # выбрать все тачки где model - model_id
+                    for car in cars:
+                        if car.get_model_id() != model_id:
+                            cars.exclude(car)
+            else:
+                # выбрать все тачки где brand - brand_id
+                for car in cars:
+                    if car.get_brand_id() != brand_id:
+                        cars.exclude(car)
+        else:
+            if country_id:
+                for car in cars:
+                    if car.get_country_id() != country_id:
+                        cars.exclude(car)
 
 
-    # except:
-    #     return HttpResponse('говно запрос')
+        engine_type_id = EngineType.objects.get(name=request.data['engine_type']).id
+        transmission_type_id = TransmissionType.objects.get(name=request.data['transmission_type']).id
+        body_type_id = BodyType.objects.get(name=request.data['body_type']).id
+        drive_type_id = DriveType.objects.get(name=request.data['drive_type'])
 
-    cars_set = Car.objects.filter(get_model_id=10)
+        cars.filter(engine_type=engine_type_id, transmission_type=transmission_type_id,
+        body_type=body_type_id, drive_type=drive_type_id, engine_capacity__gte=request.data['engine_capacity_from'],
+        engine_capacity__lte=request.data['engine_capacity_to'],  engine_power__gte=request.data['engine_power_from'], 
+        engine_power__lte=request.data['engine_power_to'], year_start_gte=request.data['year_start'],
+        year_start_lte=request.data['year_end'])
 
-    serializer = CarListSerializer(cars_set, many=True)
+        # if request.data['order_by']:
+        #     cars.order_by(request.data['order_by'])
+        # else:
+        #     cars.order_by(popularity)
+
+
+    except:
+        return HttpResponse('говно запрос')
+
+    serializer = CarListSerializer(cars, many=True)
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def car_detail(request, id):
-    cars = Car.objects.get(id=id)
-    serializer = CarDetailSerializer(cars, many=False)
-    return Response(serializer.data)
+    car = Car.objects.get(id=id)
+    car.popularity += 1
+    car.save()
 
-# {
-#     "country": "Germany",
-#     "brand": "Mercedes-Benz",
-#     "model": "E63 AMG",
-#     "generation": "W212",
-#     "engine_type": "Gasoline",
-#     "transmission_type": "Automatic",
-#     "body_type": "Sedan",
-#     "engine_capacity": "5.5",
-#     "engine_power": "585",
-#     "year_start": "2013",
-#     "year_end": "2018",
-#     "pict_id": "123123"
-# }
+    serializer = CarDetailSerializer(car, many=False)
+    return Response(serializer.data)

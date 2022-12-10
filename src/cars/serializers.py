@@ -15,7 +15,9 @@ class CarListSerializer(serializers.ModelSerializer):
 class CarDetailSerializer(serializers.ModelSerializer):
     engine_type = serializers.CharField(source='engine_type.__str__')
     transmission_type = serializers.CharField(source='transmission_type.__str__')
-
+    body_type = serializers.CharField(source='body_type.__str__')
+    drive_type = serializers.CharField(source='drive_type.__str__')
+    
     class Meta:
         model = Car
-        fields = '__all__'
+        exclude = ['id', 'popularity', 'generation']

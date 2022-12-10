@@ -55,18 +55,41 @@ class BodyType(models.Model):
         return self.name
 
 
+class DriveType(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
 class Car(models.Model):
-    generation = models.ForeignKey(Generation, on_delete=models.PROTECT)
-    engine_type = models.ForeignKey(EngineType, on_delete=models.PROTECT)
-    transmission_type = models.ForeignKey(TransmissionType, on_delete=models.PROTECT)
-    body_type = models.ForeignKey(BodyType, on_delete=models.PROTECT)
-    engine_capacity = models.FloatField()
-    engine_power = models.IntegerField()
-    year_start = models.IntegerField()
-    year_end = models.IntegerField(blank=True, null=True)
-    popularity = models.IntegerField(default=0, blank=True)
     name = models.CharField(max_length=500, default='', blank=True)
-    pict_id = models.IntegerField(default=0)
+    generation = models.ForeignKey(Generation, on_delete=models.PROTECT)
+    
+    engine_type = models.ForeignKey(EngineType, on_delete=models.PROTECT, null=True, blank=True)
+    transmission_type = models.ForeignKey(TransmissionType, on_delete=models.PROTECT, null=True, blank=True)
+    body_type = models.ForeignKey(BodyType, on_delete=models.PROTECT, null=True, blank=True)
+    drive_type = models.ForeignKey(DriveType, on_delete=models.PROTECT, null=True, blank=True)
+    popularity = models.IntegerField(default=0, null=True, blank=True)
+    pict_id = models.IntegerField(default=0, null=True, blank=True)
+
+    engine_capacity = models.FloatField(null=True, blank=True)
+    engine_power = models.IntegerField(null=True, blank=True)
+    kwt_power = models.IntegerField(null=True, blank=True)
+    year_start = models.IntegerField(null=True, blank=True)
+    year_end = models.IntegerField(blank=True, null=True)
+    body_length = models.IntegerField(null=True, blank=True)
+    body_width = models.IntegerField(null=True, blank=True)
+    body_height = models.IntegerField(null=True, blank=True)
+    weight = models.IntegerField(null=True, blank=True)
+    seats = models.IntegerField(null=True, blank=True)
+    cylinders_order = models.CharField(max_length=100, null=True, blank=True)
+    cylinders_number = models.IntegerField(null=True, blank=True)
+    torque = models.IntegerField(null=True, blank=True)
+    max_speed = models.IntegerField(null=True, blank=True)
+    time_to_100 = models.FloatField(null=True, blank=True)
+    front_brakes = models.CharField(max_length=100, null=True, blank=True)
+    back_brakes = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -94,3 +117,23 @@ class Car(models.Model):
 
     def get_country_id(self):
         return Brand.objects.get(id=self.get_brand_id()).country.id
+
+
+class Exceptions(models.Model):
+    name = models.CharField(max_length=100, null=True)
+
+
+# {
+#     "country": "Германия",
+#     "brand": "Mercedes-Benz",
+#     "model": "E63 AMG",
+#     "generation": "W212",
+#     "engine_type": "Бензин",
+#     "transmission_type": "Роботизированная",
+#     "body_type": "Седан",
+#     "engine_capacity": "5.5",
+#     "engine_power": "585",
+#     "year_start": "2013",
+#     "year_end": "2018",
+#     "pict_id": "123123"
+# }

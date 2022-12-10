@@ -41,11 +41,13 @@ INSTALLED_APPS = [
     'django_extensions',
     'debug_toolbar',
     'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -131,7 +133,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = ['https://83.222.9.212', 'https://83.222.9.212/api/add/', 'https://online-books.ru']
+CSRF_TRUSTED_ORIGINS = ['https://83.222.9.212', 'https://83.222.9.212/api/add/', 'https://online-books.ru', 'http://carguider.ru']
 # CSRF_COOKIE_SECURE = False
 # CSRF_COOKIE_HTTPONLY = False
 # SESSION_COOKIE_SECURE = False
@@ -141,4 +143,16 @@ INTERNAL_IPS = [
     # ...
     "127.0.0.1",
     # ...
+]
+
+CORS_ALLOW_ALL_ORIGINS = True # If this is used then `CORS_ALLOWED_ORIGINS` will not have any effect
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    'https://online-books.ru',
+    'http://carguider.ru',
+]  # If this is used, then not need to use `CORS_ALLOW_ALL_ORIGINS = True`
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    'https://online-books.ru',
+    'http://carguider.ru',
 ]
