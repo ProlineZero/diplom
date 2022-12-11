@@ -2,11 +2,17 @@ from django.db import models
 from django.db.models import Q, F
 import datetime
 
+def my_str(self):
+    if self.name == None:
+        return ''
+    return self.name
+
 # Create your models here.
 class Country(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
+        # return my_str(self)
         return self.name
 
 
@@ -15,7 +21,7 @@ class Brand(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class Model(models.Model):
@@ -23,7 +29,7 @@ class Model(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class Generation(models.Model):
@@ -31,35 +37,35 @@ class Generation(models.Model):
     name = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class EngineType(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class TransmissionType(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class BodyType(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class DriveType(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return my_str(self)
 
 
 class Car(models.Model):
@@ -71,7 +77,7 @@ class Car(models.Model):
     body_type = models.ForeignKey(BodyType, on_delete=models.PROTECT, null=True, blank=True)
     drive_type = models.ForeignKey(DriveType, on_delete=models.PROTECT, null=True, blank=True)
     popularity = models.IntegerField(default=0, null=True, blank=True)
-    pict_id = models.IntegerField(default=0, null=True, blank=True)
+    pict_url = models.CharField(max_length=200, null=True, blank=True)
 
     engine_capacity = models.FloatField(null=True, blank=True)
     engine_power = models.IntegerField(null=True, blank=True)
@@ -91,12 +97,14 @@ class Car(models.Model):
     front_brakes = models.CharField(max_length=100, null=True, blank=True)
     back_brakes = models.CharField(max_length=100, null=True, blank=True)
 
+    external_id = models.IntegerField(null=True, blank=True)
+
     class Meta:
         constraints = [
         models.CheckConstraint(check=(Q(year_start__gte=1850) & Q(year_start__lte=(datetime.date.today().year))), name='year_start'),
         models.CheckConstraint(check=(Q(year_end__gte=1850) & Q(year_end__lte=(datetime.date.today().year))), name='year_end'),
         models.CheckConstraint(check=(Q(engine_power__gt=0) & Q(engine_power__lte=5000)), name='engine_power'),
-        models.CheckConstraint(check=(Q(engine_type=EngineType.objects.get(name='Электрический').id) | Q(engine_capacity__gte=0) & Q(engine_capacity__lte=30)), name='engine_capacity'),
+        # models.CheckConstraint(check=(Q(engine_type=EngineType.objects.get(name='Электро').id) | Q(engine_capacity__gte=0) & Q(engine_capacity__lte=30)), name='engine_capacity'),
     ]
 
     def save(self, *args, **kwargs):
@@ -107,7 +115,7 @@ class Car(models.Model):
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return self.name
+        return my_str(self)
 
     def get_model_id(self):
         return Generation.objects.get(id=self.generation.id).model.id
@@ -115,8 +123,8 @@ class Car(models.Model):
     def get_brand_id(self):
         return Model.objects.get(id=self.get_model_id()).brand.id
 
-    def get_country_id(self):
-        return Brand.objects.get(id=self.get_brand_id()).country.id
+    def get_country(self):
+        return Brand.objects.get(id=self.get_brand_id()).country
 
 
 class Exceptions(models.Model):
@@ -135,5 +143,5 @@ class Exceptions(models.Model):
 #     "engine_power": "585",
 #     "year_start": "2013",
 #     "year_end": "2018",
-#     "pict_id": "123123"
+#     "pict_url": "123123"
 # }
