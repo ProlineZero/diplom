@@ -12,6 +12,7 @@ from django.db.models.functions import Coalesce
 @csrf_exempt
 @api_view(['POST'])
 def add_car_to_database(request):
+    a = Exceptions.objects.get(id=1)
     req_dicts = request.data
     for req_dict in req_dicts:
         try:        
@@ -27,7 +28,7 @@ def add_car_to_database(request):
                 body_type = get_or_create_simple_object(BodyType, name=req_dict['body_type'])
                 drive_type = get_or_create_simple_object(DriveType, name=req_dict['drive_type'])
 
-                get_or_create_simple_object(Car, generation=generation, engine_type=engine_type, 
+                car = get_or_create_simple_object(Car, generation=generation, engine_type=engine_type, 
                 transmission_type=transmission_type, body_type=body_type, drive_type=drive_type,
                 year_start=req_dict['year_begin'],
                 year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
@@ -36,12 +37,16 @@ def add_car_to_database(request):
                 kwt_power=req_dict['kwt_power'], weight=req_dict['weight'], seats=req_dict['seats'], 
                 cylinders_order=req_dict['cylinders_order'], cylinders_number=req_dict['cylinders_value'], torque=req_dict['torque'], 
                 max_speed=req_dict['max_speed'], time_to_100=req_dict['time_to_100'], front_brakes=req_dict['front_brakes'],
-                back_brakes=req_dict['back_brakes'], external_id=req_dict['id'])
+                back_brakes=req_dict['back_brakes'])
+                if car:
+                    car.external_id = req_dict['id']
+                    car.save()
+                a.bad_id += 1
+                a.save()
         except:
             Exceptions.objects.create(name=req_dict['id'])
-            return HttpResponse('Автомобиль <span style="color: red;">не добавлен</span>! Проверьте правильность введенных данных и повторите попытку.')
 
-    return HttpResponse('Автомобиль успешно <span style="color: green">добавлен!</span>')
+    return HttpResponse('Операция проведена')
 
 
 @api_view(['GET'])
@@ -112,7 +117,23 @@ def car_list(request):
 
 @api_view(['GET'])
 def get_random_cars(request):
-    cars = Car.objects.all()
+    # cars = Car.objects.all()
+    # for car in cars:
+    #     if car.get_brand_id != 25:
+    #         cars.exclude(id=car.id)
+
+    brand = Brand.objects.get(id=26)
+    models = brand.model_set.all()
+
+    generations = Generation.objects.filter(id=0)
+    for model in models:
+        generations |= model.generation_set.all()
+
+    cars = Car.objects.filter(id=0)
+    for generation in generations:
+        cars |= generation.car_set.all()
+
+    cars = cars[:50]
 
     serializer = CarListSerializer(cars, many=True)
     return Response(serializer.data)

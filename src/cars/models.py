@@ -128,7 +128,7 @@ class Car(models.Model):
 
 
 class Exceptions(models.Model):
-    name = models.CharField(max_length=100, null=True)
+    bad_id = models.IntegerField(null=True)
 
 
 # {
