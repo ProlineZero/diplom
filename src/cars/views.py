@@ -1,142 +1,275 @@
-from django.shortcuts import render
 from django.views import View
-from django.http import HttpResponse, HttpResponseNotFound, Http404
+from django.http import HttpResponse
 from .models import *
 from .functions import get_or_create_simple_object
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import *
-from django.db.models.functions import Coalesce
+from django.db.models import Min, Max
+import cysimdjson
+
+
+def _vol_if_key_exist(key, dict) :
+    if key in dict :
+        return dict[key]
+    else :
+        return None
+
 
 @csrf_exempt
-@api_view(['POST'])
+@api_view(['GET'])
 def add_car_to_database(request):
-    a = Exceptions.objects.get(id=1)
-    req_dicts = request.data
-    for req_dict in req_dicts:
-        try:        
-            if not Car.objects.filter(id=req_dict['id']).exists():
-                country = get_or_create_simple_object(Country, name=req_dict['country'])
+    url = 'https://carguider.ru/'
+    pictUrl = 'resources/pictures/'
+    with open("baseN.json", "r", encoding="utf8") as dataFile:
+        parser = cysimdjson.JSONParser()
+        raw_data = parser.loads(dataFile.read())
 
-                brand = get_or_create_simple_object(Brand, name=req_dict['brand'], country=country)
-                model = get_or_create_simple_object(Model, name=req_dict['model'], brand=brand)
-                generation = get_or_create_simple_object(Generation, name=req_dict['generation'], model=model)
+        for brand in raw_data :
+            brand_name = brand["name"]
+            country = brand["country"]
 
-                engine_type = get_or_create_simple_object(EngineType, name=req_dict['engine_type'])
-                transmission_type = get_or_create_simple_object(TransmissionType, name=req_dict['transmission_type'])
-                body_type = get_or_create_simple_object(BodyType, name=req_dict['body_type'])
-                drive_type = get_or_create_simple_object(DriveType, name=req_dict['drive_type'])
+            for model in brand["models"] :
+                model_name = model["name"]
+                
+                for gen in model["generations"] :
+                    gen_name = gen["name"]
+                    year_begin = gen["year-start"]
+                    year_end = gen["year-stop"]
+                    
+                    for config in gen["configurations"] :
+                        pict_name = config["id"]
+                        body_type = config["body-type"]
+                        
+                        for modification in config["modifications"] :
+                            id = str(int(modification["complectation-id"]) + 1)
+                            if int(id) != 59127 and int(id) != 79180 and int(id) != 79181 and int(id) != 79182:
+                                continue
+                            else:
+                                print()
+                            engine_type = _vol_if_key_exist("engine-type", modification["specifications"])
+                            transmission_type = _vol_if_key_exist("transmission", modification["specifications"])
+                            horse_power = _vol_if_key_exist("horse-power", modification["specifications"])
+                            kwt_power = _vol_if_key_exist("kvt-power", modification["specifications"])
+                            engine_capacity = _vol_if_key_exist("volume-litres", modification["specifications"])
+                            torque = _vol_if_key_exist("moment", modification["specifications"])
+                            drive = _vol_if_key_exist("drive", modification["specifications"])
+                            cylinders_order = _vol_if_key_exist("cylinders-order", modification["specifications"])
+                            cylinders_value = _vol_if_key_exist("cylinders-value", modification["specifications"])
+                            body_length = _vol_if_key_exist("length", modification["specifications"])
+                            body_width = _vol_if_key_exist("width", modification["specifications"])
+                            body_height = _vol_if_key_exist("height", modification["specifications"])
+                            front_brake = _vol_if_key_exist("front-brake", modification["specifications"])
+                            back_brake = _vol_if_key_exist("back-brake", modification["specifications"])
+                            if len(modification["specifications"]["seats"]) > 1 :
+                                seats = modification["specifications"]["seats"][1]
+                            else :
+                                seats = modification["specifications"]["seats"][0]
+                            weight = _vol_if_key_exist("weight", modification["specifications"])
+                            max_speed = _vol_if_key_exist("max-speed", modification["specifications"])
+                            time_to_100 = _vol_if_key_exist("time-to-100", modification["specifications"])
+                            
+                            req_dict = {
+                                'id': id,
+                                'country': country,
+                                'brand': brand_name,
+                                'model': model_name,
+                                'generation': gen_name,
+                                'year_begin': year_begin,
+                                'year_end': year_end,
+                                'body_type': str(body_type).title() if body_type else body_type,
+                                'body_length': body_length,
+                                'body_width': body_width,
+                                'body_height': body_height,
+                                'weight': weight,
+                                'seats': seats,
+                                'pict_url': f'{url}{pictUrl}{pict_name}.jpg',
+                                'engine_type': str(engine_type).title() if engine_type else engine_type,
+                                'transmission_type': str(transmission_type).title() if transmission_type else transmission_type,
+                                'drive_type': str(drive).title() if drive else drive,
+                                'engine_capacity': engine_capacity,
+                                'cylinders_order': str(cylinders_order).title() if cylinders_order else cylinders_order,
+                                'cylinders_value': cylinders_value,
+                                'horse_power': horse_power,
+                                'kwt_power': kwt_power,
+                                'torque': torque,
+                                'max_speed': max_speed,
+                                'time_to_100': time_to_100,
+                                'front_brakes': str(front_brake).title() if front_brake else front_brake,
+                                'back_brakes': str(back_brake).title() if back_brake else back_brake
+                            }
+                            try:        
+                                if not Car.objects.filter(external_id=req_dict['id']).exists():
+                                    fillerRecord = DBFiller(external_id=req_dict['id'])
 
-                car = get_or_create_simple_object(Car, generation=generation, engine_type=engine_type, 
-                transmission_type=transmission_type, body_type=body_type, drive_type=drive_type,
-                year_start=req_dict['year_begin'],
-                year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
-                engine_power=req_dict['horse_power'], pict_url=req_dict['pict_url'],
-                body_length=req_dict['body_length'], body_width=req_dict['body_width'], body_height=req_dict['body_height'],
-                kwt_power=req_dict['kwt_power'], weight=req_dict['weight'], seats=req_dict['seats'], 
-                cylinders_order=req_dict['cylinders_order'], cylinders_number=req_dict['cylinders_value'], torque=req_dict['torque'], 
-                max_speed=req_dict['max_speed'], time_to_100=req_dict['time_to_100'], front_brakes=req_dict['front_brakes'],
-                back_brakes=req_dict['back_brakes'])
-                if car:
-                    car.external_id = req_dict['id']
-                    car.save()
-                a.bad_id += 1
-                a.save()
-        except:
-            Exceptions.objects.create(name=req_dict['id'])
+                                    country = get_or_create_simple_object(Country, name=req_dict['country'])
+
+                                    brand = get_or_create_simple_object(Brand, name=req_dict['brand'], country=country)
+                                    model = get_or_create_simple_object(Model, name=req_dict['model'], brand=brand)
+                                    generation = get_or_create_simple_object(Generation, name=req_dict['generation'], model=model)
+
+                                    engine_type = get_or_create_simple_object(EngineType, name=req_dict['engine_type'])
+                                    transmission_type = get_or_create_simple_object(TransmissionType, name=req_dict['transmission_type'])
+                                    body_type = get_or_create_simple_object(BodyType, name=req_dict['body_type'])
+                                    drive_type = get_or_create_simple_object(DriveType, name=req_dict['drive_type'])
+
+                                    car = get_or_create_simple_object(Car, generation=generation, engine_type=engine_type, 
+                                    transmission_type=transmission_type, body_type=body_type, drive_type=drive_type,
+                                    year_start=req_dict['year_begin'],
+                                    year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
+                                    engine_power=req_dict['horse_power'], pict_url=req_dict['pict_url'],
+                                    body_length=req_dict['body_length'], body_width=req_dict['body_width'], body_height=req_dict['body_height'],
+                                    kwt_power=req_dict['kwt_power'], weight=req_dict['weight'], seats=req_dict['seats'], 
+                                    cylinders_order=req_dict['cylinders_order'], cylinders_number=req_dict['cylinders_value'], torque=req_dict['torque'], 
+                                    max_speed=req_dict['max_speed'], time_to_100=req_dict['time_to_100'], front_brakes=req_dict['front_brakes'],
+                                    back_brakes=req_dict['back_brakes'])
+
+                                    if car:
+                                        car.external_id = req_dict['id']
+                                        car.save()
+                                        fillerRecord.added = 1
+                                    else:
+                                        fillerRecord.added = 0
+                                    
+                                    fillerRecord.save()
+                            except Exception as e:
+                                fillerRecord.added = -100
+                                fillerRecord.save()
 
     return HttpResponse('Операция проведена')
 
 
-@api_view(['GET'])
-def car_list(request):
-    cars = Car.objects.all()
-    # try:
-    if 'country' in request.data:
-        country_id = Country.objects.get(name=request.data['country']).id
-    else:
-        country_id = 0
+# @csrf_exempt
+# @api_view(['POST'])
+# def add_car_to_database(request):
+#     req_dicts = request.data
+#     for req_dict in req_dicts:
+#         try:        
+#             if not Car.objects.filter(id=req_dict['id']).exists():
+#                 fillerRecord = DBFiller(external_id=req_dict['id'])
+#                 country = get_or_create_simple_object(Country, name=req_dict['country'])
 
-    if 'brand' in request.data:
-        if country_id:
-            brand_id = Brand.objects.get(country=country_id, name=request.data['brand']).id
-        else:
-            brand_id = Brand.objects.get(name=request.data['brand']).id
+#                 brand = get_or_create_simple_object(Brand, name=req_dict['brand'], country=country)
+#                 model = get_or_create_simple_object(Model, name=req_dict['model'], brand=brand)
+#                 generation = get_or_create_simple_object(Generation, name=req_dict['generation'], model=model)
 
-        if 'model' in request.data:
-            model_id = Model.objects.get(brand=brand_id, name=request.data['model']).id
+#                 engine_type = get_or_create_simple_object(EngineType, name=req_dict['engine_type'])
+#                 transmission_type = get_or_create_simple_object(TransmissionType, name=req_dict['transmission_type'])
+#                 body_type = get_or_create_simple_object(BodyType, name=req_dict['body_type'])
+#                 drive_type = get_or_create_simple_object(DriveType, name=req_dict['drive_type'])
 
-            if 'generation' in request.data:
-                generation_id = Generation.objects.get(model=model_id, name=request.data['generation'])
-                cars = cars.filter(generation=generation_id)
-            else: 
-                # выбрать все тачки где model - model_id
-                for car in cars:
-                    if car.get_model_id() != model_id:
-                        cars.exclude(car)
-        else:
-            # выбрать все тачки где brand - brand_id
-            for car in cars:
-                if car.get_brand_id() != brand_id:
-                    # cars.exclude(car)
-                    del car
-    else:
-        if country_id:
-            for car in cars:
-                if car.get_country().id != country_id:
-                    cars.exclude(car)
+#                 car = get_or_create_simple_object(Car, generation=generation, engine_type=engine_type, 
+#                 transmission_type=transmission_type, body_type=body_type, drive_type=drive_type,
+#                 year_start=req_dict['year_begin'],
+#                 year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
+#                 engine_power=req_dict['horse_power'], pict_url=req_dict['pict_url'],
+#                 body_length=req_dict['body_length'], body_width=req_dict['body_width'], body_height=req_dict['body_height'],
+#                 kwt_power=req_dict['kwt_power'], weight=req_dict['weight'], seats=req_dict['seats'], 
+#                 cylinders_order=req_dict['cylinders_order'], cylinders_number=req_dict['cylinders_value'], torque=req_dict['torque'], 
+#                 max_speed=req_dict['max_speed'], time_to_100=req_dict['time_to_100'], front_brakes=req_dict['front_brakes'],
+#                 back_brakes=req_dict['back_brakes'])
+#                 if car:
+#                     car.external_id = req_dict['id']
+#                     car.save()
+#                 a.bad_id += 1
+#                 a.save()
+#         except:
+#             Exceptions.objects.create(name=req_dict['id'])
 
-
-    engine_type_id = EngineType.objects.get(name=request.data['engine_type']).id
-    transmission_type_id = TransmissionType.objects.get(name=request.data['transmission_type']).id
-    body_type_id = BodyType.objects.get(name=request.data['body_type']).id
-    drive_type_id = DriveType.objects.get(name=request.data['drive_type']).id
-
-    if request.data['name']:
-        cars = cars.filter(name__contains=request.data['name'])
-    
-    cars = cars.filter(engine_type=engine_type_id, transmission_type=transmission_type_id,
-    body_type=body_type_id, drive_type=drive_type_id, engine_capacity__gte=request.data['engine_capacity_from'],
-    engine_capacity__lte=request.data['engine_capacity_to'],  engine_power__gte=request.data['engine_power_from'], 
-    engine_power__lte=request.data['engine_power_to'], year_start__gte=request.data['year_start'],
-    year_start__lte=request.data['year_end'])
-
-    if request.data['order_by']:
-        cars.order_by(request.data['order_by'])
-    else:
-        cars.order_by('-popularity')
+#     return HttpResponse('Операция проведена')
 
 
-    # except:
-    #     return HttpResponse('говно запрос')
+def get_all_cars_in_generations_filtered(generations, **filters):
+    cars = Car.objects.none()
+    for generation in generations:
+        cars |= generation.car_set.filter(**filters)
 
-    serializer = CarListSerializer(cars, many=True)
-    return Response(serializer.data)
+    return cars
 
 
-@api_view(['GET'])
-def get_random_cars(request):
-    # cars = Car.objects.all()
-    # for car in cars:
-    #     if car.get_brand_id != 25:
-    #         cars.exclude(id=car.id)
-
-    brand = Brand.objects.get(id=26)
-    models = brand.model_set.all()
-
-    generations = Generation.objects.filter(id=0)
+def get_all_generations_in_models(models):
+    generations = Generation.objects.none()
     for model in models:
         generations |= model.generation_set.all()
 
-    cars = Car.objects.filter(id=0)
-    for generation in generations:
-        cars |= generation.car_set.all()
+    return generations
 
-    cars = cars[:50]
 
-    serializer = CarListSerializer(cars, many=True)
-    return Response(serializer.data)
+def get_all_models_in_brands(brands):
+    models = Model.objects.none()
+    for brand in brands:
+        models |= brand.model_set.all()
+
+    return models
+
+
+@api_view(['POST'])
+def get_cars_list(request):
+    try:
+        filters = {}
+
+        if 'name':
+            filters['name__contains'] = request.data['name']
+
+        if 'engine_type' in request.data:
+            filters['engine_type'] = request.data['engine_type']
+
+        if 'transmission_type' in request.data:
+            filters['transmission_type'] = request.data['transmission_type']
+
+        if 'body_type' in request.data:
+            filters['body_type'] = request.data['body_type']
+
+        if 'drive_type' in request.data:
+            filters['drive_type'] = request.data['drive_type']
+
+        if 'engine_capacity_from' in request.data:
+            filters['engine_capacity__gte'] = request.data['engine_capacity_from']
+        
+        if 'engine_capacity_to' in request.data:
+            filters['engine_capacity__lte'] = request.data['engine_capacity_to']
+
+        if 'engine_power_from' in request.data:
+            filters['engine_power__gte'] = request.data['engine_power_from']
+
+        if 'engine_power_to' in request.data:
+            filters['engine_power__lte'] = request.data['engine_power_to']
+
+        if 'year_start_from' in request.data:
+            filters['year_start__gte'] = request.data['year_start_from']
+
+        if 'year_start_to' in request.data:
+            filters['year_start__lte'] = request.data['year_start_to']
+
+        if 'generation' in request.data:
+            cars = Car.objects.filter(generation=request.data['generation'], **filters)
+        elif 'model' in request.data:
+            generations = Generation.objects.filter(model=request.data['model'])
+            cars = get_all_cars_in_generations_filtered(generations, **filters)
+        elif 'brand' in request.data:
+            models = Model.objects.filter(brand=request.data['brand'])
+            generations = get_all_generations_in_models(models)
+            cars = get_all_cars_in_generations_filtered(generations, **filters)
+        elif 'country' in request.data:
+            brands = Brand.objects.filter(country=request.data['country'])
+            models = get_all_models_in_brands(brands)
+            generations = get_all_generations_in_models(models)
+            cars = get_all_cars_in_generations_filtered(generations, **filters)
+        else:
+            cars = Car.objects.filter(**filters)
+
+        if 'order_by' in request.data:
+            cars = cars.order_by(request.data['order_by'])
+        else:
+            cars = cars.order_by('-popularity')
+
+        cars = cars[request.data['offset']:request.data['offset']+request.data['limit']]
+
+        serializer = CarListSerializer(cars, many=True)
+        return Response(serializer.data)
+    except:
+        return HttpResponse('По вашему запросу ничего не найдено')
 
 
 @api_view(['GET'])
@@ -149,9 +282,92 @@ def car_detail(request, id):
     return Response(serializer.data)
 
 
+# API for filters info
 @api_view(['GET'])
 def get_countries(requset):
-    countries = Country.objects.all()
+    countries = Country.objects.order_by('name')
 
-    serializer = CountryListSerializer(countries, many=True)
+    serializer = CountrySerializer(countries, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_all_brands(request):
+    brands = Brand.objects.all().order_by('name')
+
+    serializer = BrandSerializer(brands, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_brands(request, country_id):
+    brands = Brand.objects.filter(country=country_id).order_by('name')
+
+    serializer = BrandSerializer(brands, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_models(request, brand_id):
+    models = Model.objects.filter(brand=brand_id).order_by('name')
+
+    serializer = ModelSerializer(models, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_generations(request, model_id):
+    generations = Generation.objects.filter(model=model_id).order_by('name')
+
+    serializer = GenerationSerializer(generations, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_all_body_types(reqiest):
+    body_types = BodyType.objects.all().order_by('name')
+
+    serializer = BodyTypeSerializer(body_types, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_all_engine_types(reqiest):
+    engine_types = EngineType.objects.all().order_by('name')
+
+    serializer = EngineTypeSerializer(engine_types, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_all_transmission_types(reqiest):
+    transmission_types = TransmissionType.objects.all().order_by('name')
+
+    serializer = TransmissionTypeSerializer(transmission_types, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_all_drive_types(reqiest):
+    drive_types = DriveType.objects.all().order_by('name')
+
+    serializer = DriveTypeSerializer(drive_types, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def get_engine_capacity_info(request):
+
+    return Response(Car.objects.aggregate(min=Min('engine_capacity'), max=Max('engine_capacity')))
+
+
+@api_view(['GET'])
+def get_engine_power_info(request):
+
+    return Response(Car.objects.aggregate(min=Min('engine_power'), max=Max('engine_power')))
+
+
+@api_view(['GET'])
+def get_year_start_info(request):
+    
+    return Response(Car.objects.aggregate(min=Min('year_start'), max=Max('year_start')))

@@ -101,7 +101,7 @@ class Car(models.Model):
 
     class Meta:
         constraints = [
-        models.CheckConstraint(check=(Q(year_start__gte=1850) & Q(year_start__lte=(datetime.date.today().year))), name='year_start'),
+        models.CheckConstraint(check=(Q(year_start__gte=1850) & Q(year_start__lte=(datetime.date.today().year+1))), name='year_start'),
         models.CheckConstraint(check=(Q(year_end__gte=1850) & Q(year_end__lte=(datetime.date.today().year))), name='year_end'),
         models.CheckConstraint(check=(Q(engine_power__gt=0) & Q(engine_power__lte=5000)), name='engine_power'),
         # models.CheckConstraint(check=(Q(engine_type=EngineType.objects.get(name='Электро').id) | Q(engine_capacity__gte=0) & Q(engine_capacity__lte=30)), name='engine_capacity'),
@@ -127,8 +127,9 @@ class Car(models.Model):
         return Brand.objects.get(id=self.get_brand_id()).country
 
 
-class Exceptions(models.Model):
-    bad_id = models.IntegerField(null=True)
+class DBFiller(models.Model):
+    external_id = models.IntegerField(null=True)
+    added = models.IntegerField(null=True)
 
 
 # {
