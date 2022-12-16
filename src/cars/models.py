@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import Q
+from django.contrib.auth.models import User
 import datetime
 
 def my_str(self):
@@ -111,20 +112,23 @@ class Car(models.Model):
         generation_str = Generation.objects.get(id=self.generation.id)
         model_str = Model.objects.get(id=generation_str.model.id)
         brand_str = Brand.objects.get(id=model_str.brand.id)
-        self.name = brand_str.__str__() + ' ' + model_str.__str__() + ' ' + generation_str.__str__()
+        self.name = brand_str.__str__().lower() + ' ' + model_str.__str__().lower() + ' ' + generation_str.__str__().lower()
         super().save(*args, **kwargs)
     
     def __str__(self):
         return my_str(self)
 
-    def get_model_id(self):
-        return Generation.objects.get(id=self.generation.id).model.id
+    def get_model(self):
+        return self.generation.model
 
-    def get_brand_id(self):
-        return Model.objects.get(id=self.get_model_id()).brand.id
+    def get_brand(self):
+        return self.generation.model.brand
 
     def get_country(self):
-        return Brand.objects.get(id=self.get_brand_id()).country
+        return self.generation.model.brand.country
+
+    def get_pretty_name(self):
+        return (self.generation.model.brand.__str__()+' '+self.generation.model.__str__()+' '+self.generation.__str__())
 
 
 class DBFiller(models.Model):
@@ -132,17 +136,6 @@ class DBFiller(models.Model):
     added = models.IntegerField(null=True)
 
 
-# {
-#     "country": "Германия",
-#     "brand": "Mercedes-Benz",
-#     "model": "E63 AMG",
-#     "generation": "W212",
-#     "engine_type": "Бензин",
-#     "transmission_type": "Роботизированная",
-#     "body_type": "Седан",
-#     "engine_capacity": "5.5",
-#     "engine_power": "585",
-#     "year_start": "2013",
-#     "year_end": "2018",
-#     "pict_url": "123123"
-# }
+class Favorites(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    cars = models.ManyToManyField(Car)

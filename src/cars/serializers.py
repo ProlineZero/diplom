@@ -3,6 +3,7 @@ from .models import *
 
 
 class CarListSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='get_pretty_name')
     engine_type = serializers.CharField(source='engine_type.__str__')
     transmission_type = serializers.CharField(source='transmission_type.__str__')
     country_field = serializers.CharField(source='get_country.__str__')
@@ -14,6 +15,7 @@ class CarListSerializer(serializers.ModelSerializer):
 
 
 class CarDetailSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='get_pretty_name')
     engine_type = serializers.CharField(source='engine_type.__str__')
     transmission_type = serializers.CharField(source='transmission_type.__str__')
     body_type = serializers.CharField(source='body_type.__str__')
@@ -22,7 +24,7 @@ class CarDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Car
-        to_exclude = ['id', 'popularity', 'generation']
+        to_exclude = ['id', 'popularity', 'generation', 'favorites']
         fields = ['country']
 
         for field in Car._meta.get_fields():

@@ -1,4 +1,4 @@
-from django.views import View
+from django.db.models import Q, F
 from django.http import HttpResponse
 from .models import *
 from .functions import get_or_create_simple_object
@@ -7,6 +7,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import *
 from django.db.models import Min, Max
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+import io
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+import jwt
 import cysimdjson
 
 
@@ -15,7 +23,6 @@ def _vol_if_key_exist(key, dict) :
         return dict[key]
     else :
         return None
-
 
 @csrf_exempt
 @api_view(['GET'])
@@ -140,46 +147,6 @@ def add_car_to_database(request):
     return HttpResponse('Операция проведена')
 
 
-# @csrf_exempt
-# @api_view(['POST'])
-# def add_car_to_database(request):
-#     req_dicts = request.data
-#     for req_dict in req_dicts:
-#         try:        
-#             if not Car.objects.filter(id=req_dict['id']).exists():
-#                 fillerRecord = DBFiller(external_id=req_dict['id'])
-#                 country = get_or_create_simple_object(Country, name=req_dict['country'])
-
-#                 brand = get_or_create_simple_object(Brand, name=req_dict['brand'], country=country)
-#                 model = get_or_create_simple_object(Model, name=req_dict['model'], brand=brand)
-#                 generation = get_or_create_simple_object(Generation, name=req_dict['generation'], model=model)
-
-#                 engine_type = get_or_create_simple_object(EngineType, name=req_dict['engine_type'])
-#                 transmission_type = get_or_create_simple_object(TransmissionType, name=req_dict['transmission_type'])
-#                 body_type = get_or_create_simple_object(BodyType, name=req_dict['body_type'])
-#                 drive_type = get_or_create_simple_object(DriveType, name=req_dict['drive_type'])
-
-#                 car = get_or_create_simple_object(Car, generation=generation, engine_type=engine_type, 
-#                 transmission_type=transmission_type, body_type=body_type, drive_type=drive_type,
-#                 year_start=req_dict['year_begin'],
-#                 year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
-#                 engine_power=req_dict['horse_power'], pict_url=req_dict['pict_url'],
-#                 body_length=req_dict['body_length'], body_width=req_dict['body_width'], body_height=req_dict['body_height'],
-#                 kwt_power=req_dict['kwt_power'], weight=req_dict['weight'], seats=req_dict['seats'], 
-#                 cylinders_order=req_dict['cylinders_order'], cylinders_number=req_dict['cylinders_value'], torque=req_dict['torque'], 
-#                 max_speed=req_dict['max_speed'], time_to_100=req_dict['time_to_100'], front_brakes=req_dict['front_brakes'],
-#                 back_brakes=req_dict['back_brakes'])
-#                 if car:
-#                     car.external_id = req_dict['id']
-#                     car.save()
-#                 a.bad_id += 1
-#                 a.save()
-#         except:
-#             Exceptions.objects.create(name=req_dict['id'])
-
-#     return HttpResponse('Операция проведена')
-
-
 def get_all_cars_in_generations_filtered(generations, **filters):
     cars = Car.objects.none()
     for generation in generations:
@@ -260,13 +227,16 @@ def get_cars_list(request):
             cars = Car.objects.filter(**filters)
 
         if 'order_by' in request.data:
+            # cars = cars.order_by(F(request.data['order_by']).desc(nulls_last=True))
             cars = cars.order_by(request.data['order_by'])
         else:
             cars = cars.order_by('-popularity')
 
-        cars = cars[request.data['offset']:request.data['offset']+request.data['limit']]
+        if 'offset' in request.data and 'limit' in request.data:
+            cars = cars[request.data['offset']:request.data['offset']+request.data['limit']]
 
         serializer = CarListSerializer(cars, many=True)
+
         return Response(serializer.data)
     except:
         return HttpResponse('По вашему запросу ничего не найдено')
@@ -371,3 +341,128 @@ def get_engine_power_info(request):
 def get_year_start_info(request):
     
     return Response(Car.objects.aggregate(min=Min('year_start'), max=Max('year_start')))
+
+
+jwt_encoder = "ms73mb937twp1mv6"
+@api_view(['POST'])
+def register_user(request):
+    
+    success = False
+    try:
+        user = User.objects.create_user(request.data['email'], request.data['email'], request.data['password'])
+        encoded_jwt = jwt.encode({"email": request.data['email']}, jwt_encoder, algorithm="HS256")
+        if 'first_name' in request.data:
+            user.first_name = request.data['first_name']
+        if 'last_name' in request.data:
+            user.last_name = request.data['last_name']
+        user.save()
+        success = True
+    except:
+        success = False
+
+    return Response({"success": success, "jwt": encoded_jwt})
+
+
+@api_view(['POST'])
+def login_user(request):
+
+    user = authenticate(username=request.data['email'], password=request.data['password'])
+    if user:
+        encoded_jwt = jwt.encode({"email": request.data['email']}, jwt_encoder, algorithm="HS256")
+        return Response({"jwt": encoded_jwt})
+    else:
+        return HttpResponse('Unauthorized', status=401)
+
+
+@api_view(['POST'])
+def add_to_favorites(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        car_id = request.data['car_id']
+
+        get_or_create_simple_object(Favorites, user=user)
+        try:
+            user = Favorites.objects.get(user=user)
+        except:
+            user = Favorites.objects.create(user=user)
+        user.cars.add(car_id)
+    except:
+        return Response('bad request')
+
+    return Response('good request')
+
+
+@api_view(['POST'])
+def delete_from_favorites(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        car_id = request.data['car_id']
+
+        user = Favorites.objects.get(user=user)
+        user.cars.get(id=car_id).delete()
+    except:
+        return Response('bad request')
+
+    return Response('good request')
+
+
+@api_view(['POST'])
+def get_favorites(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        user = Favorites.objects.get(user=user)
+
+        cars = user.cars.all()
+        serializer = CarListSerializer(cars, many=True)
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+
+@api_view(['POST'])
+def is_car_in_favorites(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        car_id = request.data['car_id']
+
+        user = Favorites.objects.get(user=user)
+        try:
+            user.cars.get(id=car_id)
+            res = True
+        except:
+            res = False
+    except:
+        HttpResponse('bad request')
+
+    return Response({"success": res})
+
+
+@api_view(['GET'])
+def download_car_pdf(request, id):
+
+    # Create a file-like buffer to receive PDF data.
+    buffer = io.BytesIO()
+
+    # Create the PDF object, using the buffer as its "file."
+    p = canvas.Canvas(buffer)
+
+    # Draw things on the PDF. Here's where the PDF generation happens.
+    # See the ReportLab documentation for the full list of functionality.
+    d = 4
+    strd = "Название" + str(d)
+    p.drawString(100, 680, str(strd))
+
+    # Close the PDF object cleanly, and we're done.
+    p.showPage()
+    p.save()
+
+    # FileResponse sets the Content-Disposition header so that browsers
+    # present the option to save the file.
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename='hello.pdf')

@@ -20,5 +20,13 @@ urlpatterns = [
     path('api/get-year-start-info/', get_year_start_info),
 
     path('api/get-cars-list/', get_cars_list),
-    path('api/cars-detail/<int:id>/', car_detail)
+    path('api/cars-detail/<int:id>/', car_detail),
+
+    path('api/register/', register_user),
+    path('api/login/', login_user),
+    path('api/add-to-favorites/', add_to_favorites),
+    path('api/delete-from-favorites/', delete_from_favorites),
+    path('api/get-favorites/', get_favorites),
+    path('api/is-car-in-favorites/', is_car_in_favorites),
+    path('api/download/<int:id>/', download_car_pdf)
 ]
