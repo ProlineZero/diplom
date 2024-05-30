@@ -82,12 +82,12 @@ WSGI_APPLICATION = 'django_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'car_guide',
-        'USER': 'notden',
-        'PASSWORD': 'pv-201_01082002_dS',
-        'HOST': '83.222.9.212',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'diplom',
+        'USER': 'postgres',
+        'PASSWORD': 'proline',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -148,9 +148,11 @@ INTERNAL_IPS = [
 CORS_ALLOW_ALL_ORIGINS = True # If this is used then `CORS_ALLOWED_ORIGINS` will not have any effect
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    'https://carguider.ru'
+    '*'
+    # 'https://carguider.ru'
 ]  # If this is used, then not need to use `CORS_ALLOW_ALL_ORIGINS = True`
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    'https://carguider.ru'
+    '*'
+    # 'https://carguider.ru'
 ]

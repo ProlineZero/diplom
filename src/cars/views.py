@@ -15,8 +15,8 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 import jwt
-import cysimdjson
-
+# import cysimdjson
+import json
 
 def _vol_if_key_exist(key, dict) :
     if key in dict :
@@ -30,8 +30,9 @@ def add_car_to_database(request):
     url = 'https://carguider.ru/'
     pictUrl = 'resources/pictures/'
     with open("baseN.json", "r", encoding="utf8") as dataFile:
-        parser = cysimdjson.JSONParser()
-        raw_data = parser.loads(dataFile.read())
+        # parser = cysimdjson.JSONParser()
+        # raw_data = parser.loads(dataFile.read())
+        raw_data = json.loads(dataFile.read())
 
         for brand in raw_data :
             brand_name = brand["name"]
