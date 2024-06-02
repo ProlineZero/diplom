@@ -178,7 +178,7 @@ def get_cars_list(request):
     try:
         filters = {}
 
-        if 'name':
+        if 'name' in request.data:
             filters['name__contains'] = request.data['name']
 
         if 'engine_type' in request.data:
