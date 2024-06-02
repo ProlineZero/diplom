@@ -2,7 +2,8 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    # path('api/add/', add_car_to_database),
+    path('api/add/', add_car),
+    path('api/start_parser/', add_car_to_database),
     
     path('api/get-countries/', get_countries),
     path('api/get-all-brands/', get_all_brands),

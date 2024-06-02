@@ -25,6 +25,43 @@ def _vol_if_key_exist(key, dict) :
     else :
         return None
 
+@api_view(['POST'])
+def add_car(request):
+    req_dict = dict(request.data.copy())
+    try:        
+        if not Car.objects.filter(external_id=req_dict['id']).exists():
+
+            country = get_or_create_simple_object(Country, name=req_dict['country'])
+
+            brand = get_or_create_simple_object(Brand, name=req_dict['brand'], country=country)
+            model = get_or_create_simple_object(Model, name=req_dict['model'], brand=brand)
+            generation = get_or_create_simple_object(Generation, name=req_dict['generation'], model=model)
+
+            engine_type = get_or_create_simple_object(EngineType, name=req_dict['engine_type'])
+            transmission_type = get_or_create_simple_object(TransmissionType, name=req_dict['transmission_type'])
+            body_type = get_or_create_simple_object(BodyType, name=req_dict['body_type'])
+            drive_type = get_or_create_simple_object(DriveType, name=req_dict['drive_type'])
+
+            car = get_or_create_simple_object(
+                Car, generation=generation, engine_type=engine_type, 
+                transmission_type=transmission_type, body_type=body_type, drive_type=drive_type,
+                year_start=req_dict['year_begin'],
+                year_end=req_dict['year_end'], engine_capacity=req_dict['engine_capacity'], 
+                engine_power=req_dict['horse_power'], pict_url=req_dict['pict_url'],
+                body_length=req_dict['body_length'], body_width=req_dict['body_width'], body_height=req_dict['body_height'],
+                kwt_power=req_dict['kwt_power'], weight=req_dict['weight'], seats=req_dict['seats'], 
+                cylinders_order=req_dict['cylinders_order'], cylinders_number=req_dict['cylinders_value'], torque=req_dict['torque'], 
+                max_speed=req_dict['max_speed'], time_to_100=req_dict['time_to_100'], front_brakes=req_dict['front_brakes'],
+                back_brakes=req_dict['back_brakes']
+                )
+
+            if car:
+                car.external_id = req_dict['id']
+                car.save()
+        
+    except Exception as e:
+        pass
+
 @csrf_exempt
 @api_view(['GET'])
 def add_car_to_database(request):
