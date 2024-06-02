@@ -9,6 +9,7 @@ from .serializers import *
 from django.db.models import Min, Max
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.core.exceptions import ObjectDoesNotExist
 import io
 from django.http import FileResponse
 from reportlab.pdfgen import canvas
@@ -231,7 +232,7 @@ def get_cars_list(request):
             # cars = cars.order_by(F(request.data['order_by']).desc(nulls_last=True))
             cars = cars.order_by(request.data['order_by'])
         else:
-            cars = cars.order_by('-popularity')
+            cars = cars.order_by('id')
 
         if 'offset' in request.data and 'limit' in request.data:
             cars = cars[request.data['offset']:request.data['offset']+request.data['limit']]
@@ -239,18 +240,24 @@ def get_cars_list(request):
         serializer = CarListSerializer(cars, many=True)
 
         return Response(serializer.data)
-    except:
-        return HttpResponse('По вашему запросу ничего не найдено')
+    except  Exception as e:
+        return HttpResponse(f"По вашему запросу ничего не найдено: {e}: {e.__context__}")
 
 
 @api_view(['GET'])
 def car_detail(request, id):
-    car = Car.objects.get(id=id)
-    car.popularity += 1
-    car.save()
+    response = {}
+    try:
+        car = Car.objects.get(id=id)
+        car.popularity += 1
+        car.save()
 
-    serializer = CarDetailSerializer(car, many=False)
-    return Response(serializer.data)
+        serializer = CarDetailSerializer(car, many=False)
+        response = serializer.data
+    except ObjectDoesNotExist:
+        response = {f"Автомобиль не найден"}
+
+    return Response(response)
 
 
 # API for filters info
