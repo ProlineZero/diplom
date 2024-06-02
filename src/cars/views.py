@@ -232,7 +232,7 @@ def get_cars_list(request):
             # cars = cars.order_by(F(request.data['order_by']).desc(nulls_last=True))
             cars = cars.order_by(request.data['order_by'])
         else:
-            cars = cars.order_by('id')
+            cars = cars.order_by('-popularity')
 
         if 'offset' in request.data and 'limit' in request.data:
             cars = cars[request.data['offset']:request.data['offset']+request.data['limit']]
