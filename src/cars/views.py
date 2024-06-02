@@ -65,7 +65,7 @@ def add_car(request):
             response["message"] = f"Автомобиль уже был добавлен"
         # return Response(f"Ошибка {e}: {e.__class__} - {e.__context__}")
     except Exception as e:
-        response = "Ошибка {e}: {e.__class__} - {e.__context__}"
+        response = f"Ошибка {e}: {e.__class__} - {e.__context__}"
 
     return Response(response)
 
