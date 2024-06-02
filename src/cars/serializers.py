@@ -24,12 +24,13 @@ class CarDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Car
-        to_exclude = ['id', 'popularity', 'generation', 'favorites']
-        fields = ['country']
+        exclude = ['id', 'popularity', 'generation', 'favorites']
+        # to_exclude = ['id', 'popularity', 'generation', 'favorites']
+        # fields = ['country']
 
-        for field in Car._meta.get_fields():
-            if field.name not in to_exclude:
-                fields.append(field.name)
+        # for field in Car._meta.get_fields():
+        #     if field.name not in to_exclude:
+        #         fields.append(field.name)
 
 
 class CountrySerializer(serializers.ModelSerializer):
