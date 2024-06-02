@@ -28,6 +28,7 @@ def _vol_if_key_exist(key, dict) :
 @api_view(['POST'])
 def add_car(request):
     req_dict = dict(request.data.copy())
+    response = {}
     try:        
         if not Car.objects.filter(external_id=req_dict['id']).exists():
 
@@ -58,9 +59,15 @@ def add_car(request):
             if car:
                 car.external_id = req_dict['id']
                 car.save()
-        
+
+            response = CarDetailSerializer(car).data
+        else:
+            response["message"] = f"Автомобиль уже был добавлен"
+        # return Response(f"Ошибка {e}: {e.__class__} - {e.__context__}")
     except Exception as e:
-        pass
+        response = "Ошибка {e}: {e.__class__} - {e.__context__}"
+
+    return Response(response)
 
 @csrf_exempt
 @api_view(['GET'])
