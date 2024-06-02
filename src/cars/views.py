@@ -248,6 +248,7 @@ def get_cars_list(request):
 def car_detail(request, id):
     response = {}
     try:
+        print(f"WTF")
         car = Car.objects.get(id=id)
         car.popularity += 1
         car.save()
@@ -256,6 +257,8 @@ def car_detail(request, id):
         response = serializer.data
     except ObjectDoesNotExist:
         response = {f"Автомобиль не найден"}
+    except Exception as e:
+        response = {f"except Exception: {e}: {e.__class__} {e.__context__}"}
 
     return Response(response)
 

@@ -24,7 +24,7 @@ class CarDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Car
-        exclude = ['id', 'popularity', 'generation', 'favorites']
+        exclude = ['id', 'popularity', 'generation']
         # to_exclude = ['id', 'popularity', 'generation', 'favorites']
         # fields = ['country']
 
