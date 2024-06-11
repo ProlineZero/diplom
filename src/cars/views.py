@@ -405,7 +405,8 @@ def register_user(request):
             user.last_name = request.data['last_name']
         user.save()
         success = True
-    except:
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
         success = False
 
     return Response({"success": success, "jwt": encoded_jwt})
@@ -465,6 +466,88 @@ def get_favorites(request):
 
         cars = user.cars.all().order_by("-popularity")
         serializer = CarListSerializer(cars, many=True)
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+@api_view(['POST'])
+def become_master(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        user = Favorites.objects.get(user=user)
+        master_data = {
+            "user_id": user
+        }
+        master = Master.objects.create(**master_data)
+        serializer = MasterSerializer(master)
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+@api_view(['POST'])
+def add_car_to_master(request):
+    try:
+        car = request.data.get("car", None)
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        user = Favorites.objects.get(user=user)
+        
+        master = Master.objects.get(user_id=user.id)
+
+        master.cars.add(car)
+
+        serializer = MasterSerializer(master)
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+@api_view(['GET'])
+def get_masters_troubles(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        user = Favorites.objects.get(user=user)
+        
+        master = Master.objects.get(user_id=user.id)
+
+        troubles = Trouble.objects.filter(car__in=master.cars.all().values_list("id", flat=True)).order_by("-id")
+        serializer = TroubleSerializer(troubles, many=True)
+
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+@api_view(['GET'])
+def get_user_troubles(request):
+    try:
+        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        user = Favorites.objects.get(user=user)
+
+        troubles = user.troubles.all().order_by("-id")
+        serializer = TroubleSerializer(troubles, many=True)
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+@api_view(['GET'])
+def get_resolves(request):
+    try:
+        trouble = request.GET.get("trouble", None)
+
+        resolves = Resolve.objects.filter(trouble=trouble).order_by("-id")
+        serializer = ResolveSerializer(resolves, many=True)
         return Response(serializer.data)
     except:
         HttpResponse('bad request')

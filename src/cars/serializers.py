@@ -79,3 +79,18 @@ class DriveTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = DriveType
         fields = '__all__'
+
+class TroubleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Trouble
+        fields = '__all__'
+
+class ResolveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resolve
+        fields = '__all__'
+
+class MasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Master
+        fields = '__all__'

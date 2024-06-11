@@ -29,4 +29,10 @@ urlpatterns = [
     path('api/delete-from-favorites/', delete_from_favorites),
     path('api/get-favorites/', get_favorites),
     path('api/is-car-in-favorites/', is_car_in_favorites),
+
+    path('api/become_master/', become_master),
+    path('api/add_car_to_master/', add_car_to_master),
+    path('api/get_masters_troubles/', get_masters_troubles),
+    path('api/get_user_troubles/', get_user_troubles),
+    path('api/get_resolves/', get_resolves),
 ]
