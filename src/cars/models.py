@@ -154,7 +154,7 @@ class Master(models.Model):
 class Trouble(models.Model):
     name = models.CharField(db_column="name", max_length=64, default="")
     description = models.CharField(db_column="description", max_length=256, default="")
-
+    resolved = models.BooleanField(db_column="resolved", default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name="troubles")
     car = models.ForeignKey(Car, on_delete=models.CASCADE, db_column="car")
 

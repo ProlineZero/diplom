@@ -34,5 +34,11 @@ urlpatterns = [
     path('api/add_car_to_master/', add_car_to_master),
     path('api/get_masters_troubles/', get_masters_troubles),
     path('api/get_user_troubles/', get_user_troubles),
-    path('api/get_resolves/', get_resolves),
+    path('api/get_trouble_resolves/', get_trouble_resolves),
+    path('api/is_user_master/', is_user_master),
+    path('api/add_resolve/', add_resolve),
+    path('api/add_trouble/', add_trouble),
+    path('api/get_car_troubles/', get_car_troubles),
+    path('api/set_resolve_fight/', set_resolve_fight),
+    path('api/get_master_data/', get_master_data),
 ]

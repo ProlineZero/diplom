@@ -426,7 +426,7 @@ def login_user(request):
 @api_view(['POST'])
 def add_to_favorites(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
         car_id = request.data['car_id']
 
@@ -445,7 +445,7 @@ def add_to_favorites(request):
 @api_view(['POST'])
 def delete_from_favorites(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
         car_id = request.data['car_id']
 
@@ -460,7 +460,7 @@ def delete_from_favorites(request):
 @api_view(['POST'])
 def get_favorites(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
         user = Favorites.objects.get(user=user)
 
@@ -475,27 +475,38 @@ def get_favorites(request):
 @api_view(['POST'])
 def become_master(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
-        user = Favorites.objects.get(user=user)
         master_data = {
             "user_id": user
         }
         master = Master.objects.create(**master_data)
         serializer = MasterSerializer(master)
         return Response(serializer.data)
-    except:
-        HttpResponse('bad request')
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse('bad request')
+    
+@api_view(['GET'])
+def get_master_data(request):
+    try:
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        master = Master.objects.get(user_id=user.id)
+        
+        serializer = MasterSerializer(master)
+        return Response(serializer.data)
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse('bad request')
 
-    return Response('good request')
 
 @api_view(['POST'])
 def add_car_to_master(request):
     try:
         car = request.data.get("car", None)
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
-        user = Favorites.objects.get(user=user)
         
         master = Master.objects.get(user_id=user.id)
 
@@ -503,22 +514,102 @@ def add_car_to_master(request):
 
         serializer = MasterSerializer(master)
         return Response(serializer.data)
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse('bad request')
+
+@api_view(['POST'])
+def add_trouble(request):
+    try:
+        car = request.data.get("car", None)
+        name = request.data.get("name", None)
+        description = request.data.get("description", None)
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        
+        car = Car.objects.get(id=car)
+        trouble_data = {
+            "name": name,
+            "description": description,
+
+            "car": car,
+            "user": user,
+        }
+
+        trouble = Trouble.objects.create(**trouble_data)
+
+        serializer = TroubleSerializer(trouble)
+
+        return Response(serializer.data)
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse('bad request')
+
+@api_view(['POST'])
+def add_resolve(request):
+    try:
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+
+        description = request.data.get("description", None)
+        trouble = request.data.get("trouble", None)
+        
+
+        user = User.objects.get(email=decoded_jwt['email'])
+        master = Master.objects.get(user_id=user.id)
+        trouble = Trouble.objects.get(id=trouble)
+
+        resolve_data = {
+            "description": description,
+
+            "master": master,
+            "trouble": trouble,
+        }
+
+        resolve = Resolve.objects.create(**resolve_data)
+
+        serializer = ResolveSerializer(resolve)
+
+        return Response(serializer.data)
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse('bad request')
+
+
+@api_view(['GET'])
+def get_masters_troubles(request):
+    try:
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        
+        master = Master.objects.get(user_id=user.id)
+
+        troubles = Trouble.objects.filter(resolved=False, car__in=master.cars.all().values_list("id", flat=True)).order_by("-id")
+        serializer = TroubleSerializer(troubles, many=True)
+
+        return Response(serializer.data)
     except:
         HttpResponse('bad request')
 
     return Response('good request')
 
-@api_view(['GET'])
-def get_masters_troubles(request):
+@api_view(['POST'])
+def set_resolve_fight(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
-        user = Favorites.objects.get(user=user)
-        
-        master = Master.objects.get(user_id=user.id)
+        resolve_id = request.data.get("resolve", None)
 
-        troubles = Trouble.objects.filter(car__in=master.cars.all().values_list("id", flat=True)).order_by("-id")
-        serializer = TroubleSerializer(troubles, many=True)
+        resolve = Resolve.objects.get(id=resolve_id)
+        resolve.is_right = True
+        trouble = resolve.trouble
+        trouble.resolved = True
+        trouble.save()
+
+        master = resolve.master
+        master.rating += 1
+        master.save()
+        
+        serializer = ResolveSerializer(resolve)
 
         return Response(serializer.data)
     except:
@@ -529,9 +620,8 @@ def get_masters_troubles(request):
 @api_view(['GET'])
 def get_user_troubles(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
-        user = Favorites.objects.get(user=user)
 
         troubles = user.troubles.all().order_by("-id")
         serializer = TroubleSerializer(troubles, many=True)
@@ -542,7 +632,23 @@ def get_user_troubles(request):
     return Response('good request')
 
 @api_view(['GET'])
-def get_resolves(request):
+def get_car_troubles(request):
+    try:
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        car = request.GET.get("car", None)
+
+        troubles = Trouble.objects.filter(car=car).order_by("-id")
+
+        serializer = TroubleSerializer(troubles, many=True)
+        return Response(serializer.data)
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+@api_view(['GET'])
+def get_trouble_resolves(request):
     try:
         trouble = request.GET.get("trouble", None)
 
@@ -558,7 +664,7 @@ def get_resolves(request):
 @api_view(['POST'])
 def is_car_in_favorites(request):
     try:
-        decoded_jwt = jwt.decode(request.data['user_jwt'], jwt_encoder, algorithms=["HS256"])
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
         user = User.objects.get(email=decoded_jwt['email'])
         car_id = request.data['car_id']
 
@@ -569,6 +675,22 @@ def is_car_in_favorites(request):
         except:
             res = False
     except:
+        HttpResponse('bad request')
+
+    return Response({"success": res})
+
+@api_view(['GET'])
+def is_user_master(request):
+    try:
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        if Master.objects.filter(user_id=user.id).exists():
+            res = True
+        else:
+            res = False
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+
         HttpResponse('bad request')
 
     return Response({"success": res})
