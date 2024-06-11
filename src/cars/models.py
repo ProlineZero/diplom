@@ -139,3 +139,28 @@ class DBFiller(models.Model):
 class Favorites(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     cars = models.ManyToManyField(Car)
+
+class Compare(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    cars = models.ManyToManyField(Car)
+
+class Master(models.Model):
+    rating = models.IntegerField(db_column="rating", default=0)
+    description = models.CharField(db_column="description", max_length=256, default="")
+
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    cars = models.ManyToManyField(Car)
+
+class Trouble(models.Model):
+    description = models.CharField(db_column="description", max_length=256, default="")
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, db_column="car")
+
+class Resolve(models.Model):
+    description = models.CharField(db_column="description", max_length=256, default="")
+
+    is_right = models.BooleanField(db_column="is_right", default=False)
+    
+    master = models.ForeignKey(Master, on_delete=models.CASCADE, null=True)
+    trouble = models.ForeignKey(Trouble, on_delete=models.CASCADE, db_column="trouble")

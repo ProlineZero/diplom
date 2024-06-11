@@ -1,7 +1,7 @@
 from django.db.models import Q, F
 from django.http import HttpResponse
 from .models import *
-from .functions import get_or_create_simple_object
+from .functions import get_or_create_simple_object, _vol_if_key_exist
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -16,14 +16,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 import jwt
-# import cysimdjson
 import json
-
-def _vol_if_key_exist(key, dict) :
-    if key in dict :
-        return dict[key]
-    else :
-        return None
 
 @api_view(['POST'])
 def add_car(request):
@@ -470,7 +463,7 @@ def get_favorites(request):
         user = User.objects.get(email=decoded_jwt['email'])
         user = Favorites.objects.get(user=user)
 
-        cars = user.cars.all()
+        cars = user.cars.all().order_by("-popularity")
         serializer = CarListSerializer(cars, many=True)
         return Response(serializer.data)
     except:
@@ -497,27 +490,3 @@ def is_car_in_favorites(request):
 
     return Response({"success": res})
 
-
-@api_view(['GET'])
-def download_car_pdf(request, id):
-
-    # Create a file-like buffer to receive PDF data.
-    buffer = io.BytesIO()
-
-    # Create the PDF object, using the buffer as its "file."
-    p = canvas.Canvas(buffer)
-
-    # Draw things on the PDF. Here's where the PDF generation happens.
-    # See the ReportLab documentation for the full list of functionality.
-    d = 4
-    strd = "Название" + str(d)
-    p.drawString(100, 680, str(strd))
-
-    # Close the PDF object cleanly, and we're done.
-    p.showPage()
-    p.save()
-
-    # FileResponse sets the Content-Disposition header so that browsers
-    # present the option to save the file.
-    buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename='hello.pdf')

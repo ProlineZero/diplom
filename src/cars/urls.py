@@ -29,5 +29,4 @@ urlpatterns = [
     path('api/delete-from-favorites/', delete_from_favorites),
     path('api/get-favorites/', get_favorites),
     path('api/is-car-in-favorites/', is_car_in_favorites),
-    path('api/download/<int:id>/', download_car_pdf)
 ]
