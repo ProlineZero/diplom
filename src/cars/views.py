@@ -448,7 +448,7 @@ def delete_from_favorites(request):
         car_id = request.data['car_id']
 
         user = Favorites.objects.get(user=user)
-        user.cars.get(id=car_id).delete()
+        user.cars.remove(car_id)
     except:
         return Response('bad request')
 
