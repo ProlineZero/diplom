@@ -87,8 +87,8 @@ DATABASES = {
         'NAME': 'diplom',
         'USER': 'postgres',
         'PASSWORD': 'prolinezero',
-        # 'HOST': 'localhost',
-        'HOST': '192.168.1.11',
+        'HOST': 'localhost',
+        # 'HOST': '192.168.1.11',
         'PORT': '5432',
     }
 }

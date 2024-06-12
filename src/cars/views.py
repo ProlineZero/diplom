@@ -671,10 +671,11 @@ def is_car_in_favorites(request):
             res = True
         except:
             res = False
-    except:
-        HttpResponse('bad request')
+        return Response({"success": res})
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        HttpResponse(f"Except error {e}: {e.__class__} - {e.__context__}")
 
-    return Response({"success": res})
 
 @api_view(['GET'])
 def is_user_master(request):
