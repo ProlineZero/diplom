@@ -405,11 +405,11 @@ def register_user(request):
             user.last_name = request.data['last_name']
         user.save()
         success = True
+        return Response({"success": success, "jwt": encoded_jwt})
     except Exception as e:
         print(f"Except error {e}: {e.__class__} - {e.__context__}")
         success = False
-
-    return Response({"success": success, "jwt": encoded_jwt})
+        return Response({"success": f"Except error {e}: {e.__class__} - {e.__context__}"})
 
 
 @api_view(['POST'])
