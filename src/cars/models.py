@@ -77,6 +77,7 @@ class Car(models.Model):
     transmission_type = models.ForeignKey(TransmissionType, on_delete=models.PROTECT, null=True, blank=True)
     body_type = models.ForeignKey(BodyType, on_delete=models.PROTECT, null=True, blank=True)
     drive_type = models.ForeignKey(DriveType, on_delete=models.PROTECT, null=True, blank=True)
+    
     popularity = models.IntegerField(default=0, null=True, blank=True)
     pict_url = models.CharField(max_length=200, null=True, blank=True)
 
