@@ -465,11 +465,9 @@ def get_favorites(request):
         cars = user.cars.all().order_by("-popularity")
         serializer = CarListSerializer(cars, many=True)
         return Response(serializer.data)
-    except Exception as e:
-        print(f"Except error {e}: {e.__class__} - {e.__context__}")
-        return HttpResponse(f"Except error {e}: {e.__class__} - {e.__context__}")
+    except:
+        return Response('bad request', status=400)
 
-    return Response('good request')
 
 @api_view(['POST'])
 def become_master(request):
