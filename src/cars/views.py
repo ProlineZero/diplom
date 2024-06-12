@@ -65,11 +65,9 @@ def add_car(request):
 @csrf_exempt
 @api_view(['GET'])
 def add_car_to_database(request):
-    url = 'https://carguider.ru/'
+    url = 'http://193.124.33.120/'
     pictUrl = 'resources/pictures/'
     with open("baseN.json", "r", encoding="utf8") as dataFile:
-        # parser = cysimdjson.JSONParser()
-        # raw_data = parser.loads(dataFile.read())
         raw_data = json.loads(dataFile.read())
 
         for brand in raw_data :
@@ -467,8 +465,9 @@ def get_favorites(request):
         cars = user.cars.all().order_by("-popularity")
         serializer = CarListSerializer(cars, many=True)
         return Response(serializer.data)
-    except:
-        HttpResponse('bad request')
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse(f"Except error {e}: {e.__class__} - {e.__context__}")
 
     return Response('good request')
 
