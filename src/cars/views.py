@@ -466,7 +466,7 @@ def get_favorites(request):
         serializer = CarListSerializer(cars, many=True)
         return Response(serializer.data)
     except:
-        return Response('bad request', status=400)
+        return Response([])
 
 
 @api_view(['POST'])
