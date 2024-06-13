@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/get_user_troubles/', get_user_troubles),
     path('api/get_trouble_resolves/', get_trouble_resolves),
     path('api/is_user_master/', is_user_master),
+    path('api/is_car_in_masters/', is_car_in_masters),
     path('api/add_resolve/', add_resolve),
     path('api/add_trouble/', add_trouble),
     path('api/get_car_troubles/', get_car_troubles),

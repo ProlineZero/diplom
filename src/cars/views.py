@@ -606,6 +606,25 @@ def get_masters_troubles(request):
 
     return Response('good request')
 
+
+@api_view(['GET'])
+def is_car_in_masters(request):
+    try:
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        car = request.GET.get("car", None)
+        
+        master = Master.objects.get(user_id=user.id)
+
+        cars = master.cars.all().values_list("id", flat=True)
+        res = car in cars
+        return Response({"success": res})
+    except:
+        HttpResponse('bad request')
+
+    return Response('good request')
+
+
 @api_view(['POST'])
 def set_resolve_fight(request):
     try:
@@ -615,6 +634,8 @@ def set_resolve_fight(request):
 
         resolve = Resolve.objects.get(id=resolve_id)
         resolve.is_right = True
+        resolve.save()
+        
         trouble = resolve.trouble
         trouble.resolved = True
         trouble.save()
