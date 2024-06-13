@@ -81,6 +81,7 @@ class DriveTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TroubleSerializer(serializers.ModelSerializer):
+    car = CarDetailSerializer()
     class Meta:
         model = Trouble
         fields = '__all__'
