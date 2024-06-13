@@ -32,6 +32,7 @@ urlpatterns = [
 
     path('api/become_master/', become_master),
     path('api/add_car_to_master/', add_car_to_master),
+    path('api/remove_car_to_master/', remove_car_to_master),
     path('api/get_masters_troubles/', get_masters_troubles),
     path('api/get_user_troubles/', get_user_troubles),
     path('api/get_trouble_resolves/', get_trouble_resolves),

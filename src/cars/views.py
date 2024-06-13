@@ -516,6 +516,23 @@ def add_car_to_master(request):
         return HttpResponse('bad request')
 
 @api_view(['POST'])
+def remove_car_to_master(request):
+    try:
+        car = request.data.get("car", None)
+        decoded_jwt = jwt.decode(request.headers["Authorization"].replace("Bearer", "").replace(" ", ""), jwt_encoder, algorithms=["HS256"])
+        user = User.objects.get(email=decoded_jwt['email'])
+        
+        master = Master.objects.get(user_id=user.id)
+
+        master.cars.remove(car)
+
+        serializer = MasterSerializer(master)
+        return Response(serializer.data)
+    except Exception as e:
+        print(f"Except error {e}: {e.__class__} - {e.__context__}")
+        return HttpResponse('bad request')
+
+@api_view(['POST'])
 def add_trouble(request):
     try:
         car = request.data.get("car", None)
